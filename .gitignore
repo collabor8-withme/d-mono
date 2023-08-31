@@ -3,4 +3,4 @@ node_modules
 .idea
 docs/.vitepress/dist
 docs/.vitepress/cache
-packages/@depanlz/**/dist
+packages/@depanlz/*/dist
