@@ -1,0 +1,12 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@depanlz/cli": "0.0.1-alpha",
+    "@depanlz/core": "0.0.1-alpha",
+    "@depanlz/web-server": "0.0.1-alpha"
+  },
+  "changesets": [
+    "cold-donkeys-film"
+  ]
+}

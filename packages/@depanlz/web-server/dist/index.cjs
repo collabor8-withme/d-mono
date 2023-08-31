@@ -22,41 +22,8 @@ function _interopNamespaceDefault(e) {
 
 var http__namespace = /*#__PURE__*/_interopNamespaceDefault(http);
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise, SuppressedError, Symbol */
-
-
-var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-
-typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-    var e = new Error(message);
-    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-};
-
 function webServer(config, depGraph) {
-    var depthType = [
+    const depthType = [
         { name: 'depth1', color: '#ff6e76', symbolSize: 200 },
         { name: 'depth2', color: '#4992ff', symbolSize: 120 },
         { name: 'depth3', color: '#7cffb2', symbolSize: 80 },
@@ -66,7 +33,7 @@ function webServer(config, depGraph) {
         { name: 'depth7', color: '#ff8a45', symbolSize: 15 },
         { name: 'depth8', color: '#ff8a45', symbolSize: 5 },
     ];
-    var option = {
+    const option = {
         title: {
             text: "DepAnlz - @depanlz/web-server",
             left: "center",
@@ -123,31 +90,71 @@ function webServer(config, depGraph) {
                     opacity: 0.7
                 },
                 categories: depthType.slice(0, config.DEPTH),
-                nodes: depGraph.nodes.map(function (node) {
-                    return __assign(__assign({}, node), { name: node.id, category: node.level, symbolSize: depthType[node.level].symbolSize, itemStyle: { color: depthType[node.level].color } });
+                nodes: depGraph.nodes.map(node => {
+                    return {
+                        ...node,
+                        name: node.id,
+                        category: node.level,
+                        symbolSize: depthType[node.level].symbolSize,
+                        itemStyle: { color: depthType[node.level].color }
+                    };
                 }),
                 edges: depGraph.edges,
             }
         ]
     };
-    var str = JSON.stringify(option, null, 2);
-    var PORT = webServer.prototype.PORT;
-    http__namespace.createServer(function (req, res) {
-        var html = "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Document</title>\n</head>\n<style>\nhtml, body {\n    margin: 0;\n    padding: 0;\n    width: 100vw;\n    height: 100vh;\n}\n\n#container {\n    width: 100%;\n    height: 100%;\n}\n</style>\n<body>\n    <div id=\"container\"></div>\n    <script src=\"https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js\"></script>\n    <script>\n                const myChart = echarts.init(document.getElementById('container'));\n                myChart.showLoading();\n                myChart.hideLoading();\n                const option = ".concat(str, "\n                myChart.setOption(option);\n                console.log(echarts)\n    </script>\n</body>\n</html>\n            ");
+    const str = JSON.stringify(option, null, 2);
+    const PORT = webServer.prototype.PORT;
+    http__namespace.createServer((req, res) => {
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#container {
+    width: 100%;
+    height: 100%;
+}
+</style>
+<body>
+    <div id="container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+                const myChart = echarts.init(document.getElementById('container'));
+                myChart.showLoading();
+                myChart.hideLoading();
+                const option = ${str}
+                myChart.setOption(option);
+                console.log(echarts)
+    </script>
+</body>
+</html>
+            `;
         res.end(html);
-    }).listen(PORT, function () {
-        console.log("The dependency graph is rendered in http://localhost:".concat(PORT));
+    }).listen(PORT, () => {
+        console.log(`The dependency graph is rendered in http://localhost:${PORT}`);
         // 在 Unix-like 系统中，使用 open 命令
         if (process.platform === 'darwin') {
-            child_process.exec("open http://localhost:".concat(PORT));
+            child_process.exec(`open http://localhost:${PORT}`);
         }
         // 在 Windows 系统中，使用 start 命令
         else if (process.platform === 'win32') {
-            child_process.exec("start http://localhost:".concat(PORT));
+            child_process.exec(`start http://localhost:${PORT}`);
         }
         // 在 Linux 等系统中，可以使用 xdg-open 命令
         else {
-            child_process.exec("xdg-open http://localhost:".concat(PORT));
+            child_process.exec(`xdg-open http://localhost:${PORT}`);
         }
     });
 }

@@ -3,21 +3,21 @@ import path from 'path';
 import typescript from "@rollup/plugin-typescript"
 import json from '@rollup/plugin-json';
 import resolve from "@rollup/plugin-node-resolve"
-const packages = path.resolve(process.cwd(), 'packages/@depche');
+const packages = path.resolve(process.cwd(), 'packages/@depanlz');
 const packageDir = fs.readdirSync(packages);
 
 function output(pkg) {
     return [
         {
-            input: [`./packages/@depche/${pkg}/src/index.ts`],
+            input: [`./packages/@depanlz/${pkg}/src/index.ts`],
             output: [
                 {
-                    file: `./packages/@depche/${pkg}/dist/index.cjs`,
+                    file: `./packages/@depanlz/${pkg}/dist/index.cjs`,
                     format: 'cjs',
                     sourcemap: true
                 },
                 {
-                    file: `./packages/@depche/${pkg}/dist/index.mjs`,
+                    file: `./packages/@depanlz/${pkg}/dist/index.mjs`,
                     format: 'esm',
                     sourcemap: true
                 }
@@ -28,8 +28,8 @@ function output(pkg) {
                 resolve()
             ],
             external: [
-                "@depche/core",
-                "@depche/web-server",
+                "@depanlz/core",
+                "@depanlz/web-server",
             ]
         }
     ];

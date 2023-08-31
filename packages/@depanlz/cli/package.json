@@ -1,6 +1,6 @@
 {
   "name": "@depanlz/cli",
-  "version": "0.0.1-alpha",
+  "version": "0.0.1-alpha.0",
   "description": "depanlz is a dependencies analyze tool",
   "main": "./bin/depanlz.cjs",
   "type": "module",

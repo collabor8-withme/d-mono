@@ -20,12 +20,12 @@ function isFileExists(filePath) {
  *
  * 返回package.json node_modules的绝对目录，以及包管理器名称
  */
-var CWD = process.cwd();
-var PKG_JSON_DIR = join(CWD, "package.json");
-var NODE_MODULES_DIR = join(CWD, "node_modules");
-var NPM_LOCK_DIR = join(CWD, "package-lock.json");
-var YARN_LOCK_DIR = join(CWD, "yarn.lock");
-var PNPM_LOCK_DIR = join(CWD, "pnpm-lock.yaml");
+const CWD = process.cwd();
+const PKG_JSON_DIR = join(CWD, "package.json");
+const NODE_MODULES_DIR = join(CWD, "node_modules");
+const NPM_LOCK_DIR = join(CWD, "package-lock.json");
+const YARN_LOCK_DIR = join(CWD, "yarn.lock");
+const PNPM_LOCK_DIR = join(CWD, "pnpm-lock.yaml");
 function detectPackageManager() {
     if (isFileExists(NPM_LOCK_DIR)) {
         return "npm";
@@ -40,57 +40,56 @@ function detectPackageManager() {
 }
 function preHook(DEPTH) {
     if (!isFileExists(PKG_JSON_DIR)) {
-        throw new Error("\u001B[31m\u5F53\u524D\u5DE5\u4F5C\u76EE\u5F55\u4E3A".concat(CWD, ",\u6CA1\u6709\u53D1\u73B0package.json\u001B[0m"));
+        throw new Error(`\x1b[31m当前工作目录为${CWD},没有发现package.json\x1b[0m`);
     }
     if (!isFileExists(NODE_MODULES_DIR)) {
         throw new Error("not contain node_modules");
     }
-    var PKG_MANAGER = detectPackageManager();
+    const PKG_MANAGER = detectPackageManager();
     if (!PKG_MANAGER) {
         throw new Error("lock file lose");
     }
-    var config = {
-        PKG_JSON_DIR: PKG_JSON_DIR,
-        NODE_MODULES_DIR: NODE_MODULES_DIR,
-        PKG_MANAGER: PKG_MANAGER,
-        DEPTH: DEPTH
+    const config = {
+        PKG_JSON_DIR,
+        NODE_MODULES_DIR,
+        PKG_MANAGER,
+        DEPTH
     };
     return config;
 }
 
 function isArrContainObj(arr, obj) {
-    return arr.some(function (node) { return node.id === obj.id; });
+    return arr.some(node => node.id === obj.id);
 }
-var DepGraph = /** @class */ (function () {
-    function DepGraph() {
+class DepGraph {
+    nodes;
+    edges;
+    constructor() {
         this.nodes = [];
         this.edges = [];
     }
-    DepGraph.prototype.insertNode = function (dependence, version, level) {
-        var node = {
+    insertNode(dependence, version, level) {
+        const node = {
             id: dependence + version,
-            dependence: dependence,
-            version: version,
-            level: level
+            dependence,
+            version,
+            level
         };
         !isArrContainObj(this.nodes, node) && this.nodes.push(node);
-    };
-    DepGraph.prototype.insertEgde = function (fromNodeId, toNodeId) {
-        var edge = {
+    }
+    insertEgde(fromNodeId, toNodeId) {
+        const edge = {
             source: fromNodeId,
             target: toNodeId
         };
         this.edges.push(edge);
-    };
-    return DepGraph;
-}());
+    }
+}
 
-var depGraph = new DepGraph();
-function recursiveDep4YarnAndNpm(dependencies, sourceId, config, level, processedDeps) {
-    if (level === void 0) { level = 1; }
-    if (processedDeps === void 0) { processedDeps = new Set(); }
-    for (var depName in dependencies) {
-        var NODE_MODULES_DIR = config.NODE_MODULES_DIR, DEPTH = config.DEPTH;
+const depGraph = new DepGraph();
+function YARNorNPMAdapter(dependencies, sourceId, config, level = 1, processedDeps = new Set()) {
+    for (const depName in dependencies) {
+        const { NODE_MODULES_DIR, DEPTH } = config;
         if (level === DEPTH + 1) {
             return;
         }
@@ -99,23 +98,21 @@ function recursiveDep4YarnAndNpm(dependencies, sourceId, config, level, processe
         }
         processedDeps.add(depName);
         // 记录目标节点
-        var targetId = depName + dependencies[depName];
+        const targetId = depName + dependencies[depName];
         depGraph.insertNode(depName, dependencies[depName], level);
         depGraph.insertEgde(sourceId, targetId);
-        var nestedPkgJson = path.join(NODE_MODULES_DIR, depName, "package.json");
-        var content = fs.readFileSync(nestedPkgJson, {
+        const nestedPkgJson = path.join(NODE_MODULES_DIR, depName, "package.json");
+        const content = fs.readFileSync(nestedPkgJson, {
             encoding: "utf-8"
         });
-        var dep = JSON.parse(content).dependencies;
-        recursiveDep4YarnAndNpm(dep, targetId, config, level + 1, processedDeps);
+        const { dependencies: dep } = JSON.parse(content);
+        YARNorNPMAdapter(dep, targetId, config, level + 1, processedDeps);
         processedDeps.delete(depName);
     }
 }
-function recursiveDep4Pnpm(dependencies, sourceId, config, level, processedDeps) {
-    if (level === void 0) { level = 1; }
-    if (processedDeps === void 0) { processedDeps = new Set(); }
-    for (var depName in dependencies) {
-        var NODE_MODULES_DIR = config.NODE_MODULES_DIR, DEPTH = config.DEPTH;
+function PNPMAdapter(dependencies, sourceId, config, level = 1, processedDeps = new Set()) {
+    for (const depName in dependencies) {
+        const { NODE_MODULES_DIR, DEPTH } = config;
         if (level === DEPTH + 1) {
             return;
         }
@@ -124,71 +121,71 @@ function recursiveDep4Pnpm(dependencies, sourceId, config, level, processedDeps)
         }
         processedDeps.add(depName);
         // 记录目标节点
-        var targetId = depName + dependencies[depName];
+        const targetId = depName + dependencies[depName];
         depGraph.insertNode(depName, dependencies[depName], level);
         depGraph.insertEgde(sourceId, targetId);
-        var nestedPkgJson = "";
+        let nestedPkgJson = "";
         if (level === 1) {
             nestedPkgJson = path.join(NODE_MODULES_DIR, depName, "package.json");
         }
         else {
             nestedPkgJson = path.join(NODE_MODULES_DIR, ".pnpm/node_modules", depName, "package.json");
         }
-        var content = fs.readFileSync(nestedPkgJson, {
+        const content = fs.readFileSync(nestedPkgJson, {
             encoding: "utf-8"
         });
-        var dep = JSON.parse(content).dependencies;
-        recursiveDep4Pnpm(dep, targetId, config, level + 1, processedDeps);
+        const { dependencies: dep } = JSON.parse(content);
+        PNPMAdapter(dep, targetId, config, level + 1, processedDeps);
         processedDeps.delete(depName);
     }
 }
 function coreHook(config) {
-    var PKG_JSON_DIR = config.PKG_JSON_DIR, PKG_MANAGER = config.PKG_MANAGER;
+    const { PKG_JSON_DIR, PKG_MANAGER, } = config;
     if (PKG_MANAGER === "yarn" || PKG_MANAGER === "npm") {
-        var content = fs.readFileSync(PKG_JSON_DIR, {
+        const content = fs.readFileSync(PKG_JSON_DIR, {
             encoding: "utf-8"
         });
-        var _a = JSON.parse(content), dependencies = _a.dependencies, _b = _a.name, name_1 = _b === void 0 ? "YourProject" : _b, _c = _a.version, version = _c === void 0 ? "@latest" : _c;
-        var sourceId = name_1 + version;
-        depGraph.insertNode(name_1, version, 0);
-        recursiveDep4YarnAndNpm(dependencies, sourceId, config);
+        const { dependencies, name = "YourProject", version = "@latest" } = JSON.parse(content);
+        const sourceId = name + version;
+        depGraph.insertNode(name, version, 0);
+        YARNorNPMAdapter(dependencies, sourceId, config);
     }
     // no finish
     if (PKG_MANAGER === "pnpm") {
-        var content = fs.readFileSync(PKG_JSON_DIR, {
+        const content = fs.readFileSync(PKG_JSON_DIR, {
             encoding: "utf-8"
         });
-        var _d = JSON.parse(content), dependencies = _d.dependencies, _e = _d.name, name_2 = _e === void 0 ? "YourProject" : _e, _f = _d.version, version = _f === void 0 ? "@latest" : _f;
-        var sourceId = name_2 + version;
-        depGraph.insertNode(name_2, version, 0);
-        recursiveDep4Pnpm(dependencies, sourceId, config);
+        const { dependencies, name = "YourProject", version = "@latest" } = JSON.parse(content);
+        const sourceId = name + version;
+        depGraph.insertNode(name, version, 0);
+        PNPMAdapter(dependencies, sourceId, config);
     }
     return depGraph;
 }
 
-var DepAnlz = /** @class */ (function () {
-    function DepAnlz(depth) {
+class DepAnlz {
+    depth;
+    constructor(depth) {
         this.depth = depth;
     }
-    DepAnlz.prototype.preHook = function () {
+    preHook() {
         return preHook(this.depth);
-    };
-    DepAnlz.prototype.coreHook = function (config) {
+    }
+    coreHook(config) {
         return coreHook(config);
-    };
-    DepAnlz.prototype.postHook = function (callback) {
-        var config = preHook(this.depth);
-        var depGraph = coreHook(config);
-        var result = callback(config, depGraph);
+    }
+    postHook(callback) {
+        const config = preHook(this.depth);
+        const depGraph = coreHook(config);
+        const result = callback(config, depGraph);
         return result;
-    };
-    DepAnlz.prototype.lifeCycle = function () {
-        var config = this.preHook();
-        var depGraph = this.coreHook(config);
+    }
+    lifeCycle() {
+        const config = this.preHook();
+        const depGraph = this.coreHook(config);
         return depGraph;
-    };
-    return DepAnlz;
-}());
+    }
+}
 
 export { DepAnlz };
 //# sourceMappingURL=index.mjs.map
