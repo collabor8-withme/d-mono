@@ -4,7 +4,6 @@ import coreHook from "./hooks/coreHook";
 import DepGraph from './DepGraph';
 
 class DepAnlz {
-
     depth: number
 
     constructor(depth: number) {
