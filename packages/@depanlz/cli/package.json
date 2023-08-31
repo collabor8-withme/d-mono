@@ -1,0 +1,29 @@
+{
+  "name": "@depanlz/cli",
+  "version": "0.0.1-alpha",
+  "description": "depanlz is a dependencies analyze tool",
+  "main": "./bin/depanlz.cjs",
+  "type": "module",
+  "bin": {
+    "depanlz": "./bin/depanlz.cjs"
+  },
+  "scripts": {
+    "build": "rollup -c -w"
+  },
+  "keywords": [
+    "dependencies",
+    "analyze"
+  ],
+  "author": "Scoheart",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@depche/core": "0.1.0"
+  },
+  "devDependencies": {
+    "@depche/core": "workspace:^0.1.0",
+    "@depche/web-server": "workspace:^0.1.0"
+  }
+}

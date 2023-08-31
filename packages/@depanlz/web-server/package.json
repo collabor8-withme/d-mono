@@ -1,0 +1,18 @@
+{
+  "name": "@depanlz/web-server",
+  "version": "0.0.1-alpha",
+  "description": "",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c -w"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
+}
